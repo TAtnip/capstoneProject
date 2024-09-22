@@ -1,0 +1,13 @@
+.grid-container {
+  display: flex;
+}
+
+.grid-container .grids {
+  flex-grow: 1;
+  text-align: center;
+}
+
+.grid-container .grids .button-container {
+  display: flex;
+  flex-direction: column;
+}

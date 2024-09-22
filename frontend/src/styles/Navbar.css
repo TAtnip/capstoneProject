@@ -1,0 +1,50 @@
+body {
+  margin: 0px;
+}
+
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #d6d6d6;
+  font-family: Arial, sans-serif;
+  padding: 0px 0.1rem;
+  margin: 0px;
+}
+
+/* Logo styling */
+.navbar-logo {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: block; /* Removes any inline spacing issues */
+  height: 4rem; /* Adjust based on your design */
+  width: auto;
+}
+
+/* Ensure no border around the dropdown */
+.dropdown .Dropdown {
+  margin: 0;
+  padding: 0;
+}
+
+/* Menu icon styling */
+.menu-icon {
+  height: 3rem;
+  width: auto;
+  transition: background-color 0.3s ease;
+  border-radius: .5rem;
+}
+
+.dropdown button {
+  border: none; /* Removes default border */
+  padding: 0; /* Removes padding */
+  margin-right: 0.4rem; /* Removes margin */
+  background: none; /* Ensures no background */
+  cursor: pointer; /* Indicates it's clickable */
+  border-radius: 1rem;
+}
+/* Hover effect for the menu icon */
+.menu-icon:hover {
+  background-color: rgb(72, 153, 153); /* Changes background color on hover */
+}
