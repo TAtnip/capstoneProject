@@ -30,7 +30,6 @@ class Mesocycle(models.Model):
   
 class Session(models.Model):
   mesocycle = models.ForeignKey(Mesocycle, on_delete = models.SET_NULL, null = True, blank = True)
-  name = models.CharField(max_length=50)
   user = models.ForeignKey(User, on_delete=models.CASCADE)
   date = models.DateField()
   notes = models.TextField(blank=True)

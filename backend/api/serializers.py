@@ -36,10 +36,14 @@ class MesocycleSerializer(serializers.ModelSerializer):
     extra_kwargs = {"user":{"read_only":True}}
 
 class SessionSerializer(serializers.ModelSerializer):
-  class Meta:
-    model = Session
-    fields = ["id","name", "mesocycle","user","date","notes"]
-    extra_kwargs = {"user":{"read_only":True}}
+    class Meta:
+        model = Session
+        fields = ["id", "mesocycle", "date"]  # Exclude 'name' and 'notes'
+        extra_kwargs = {
+            "user": {"read_only": True},
+            "name": {"required": False},  # Make 'name' optional
+            "notes": {"required": False}   # Make 'notes' optional
+        }
 
 class SetSerializer(serializers.ModelSerializer):
   class Meta:
