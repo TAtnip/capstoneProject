@@ -27,6 +27,7 @@ function BuildMesoForm({ route, method }) {
 
   const createMesocycle = (e) => {
     e.preventDefault()
+    
     api.post(route, { name, start_date, end_date, description }).then((res) => {
       if (res.status === 201) {
         alert("Mesocycle Created")

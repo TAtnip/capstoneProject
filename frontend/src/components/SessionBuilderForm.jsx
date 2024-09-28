@@ -5,10 +5,9 @@ import '../styles/SessionBuilderForm.css';
 import { addDays, startOfWeek, format, addWeeks, subWeeks, eachDayOfInterval, isWithinInterval, parseISO } from 'date-fns';
 
 function SessionBuilderForm({ mesocycle }) {
-  const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const [currentWeek, setCurrentWeek] = useState(() => {
     const startDate = new Date(mesocycle.start_date);
-    return startOfWeek(startDate, { weekStartsOn: 0 }); // Sunday as the start of the week
+    return startOfWeek(startDate, { weekStartsOn: 0 });
   });
 
   const allDates = eachDayOfInterval({
@@ -16,19 +15,24 @@ function SessionBuilderForm({ mesocycle }) {
     end: parseISO(mesocycle.end_date)
   }).map(date => format(date, 'yyyy-MM-dd'));
 
-  console.log(allDates);
   const [exercises, setExercises] = useState([]);
   const [muscleGroupList, setMuscleGroupList] = useState([]);
-  const [exercisesByDay, setExercisesByDay] = useState(
-    daysOfWeek.reduce((acc, day) => ({
-      ...acc,
-      [day]: [{ exerciseId: "", muscleGroups: [], sets: 0, weight: null, reps: null, rir: null }],
-    }), {})
-  );
+  const [exercisesByDay, setExercisesByDay] = useState({});
+
+  useEffect(() => {
+    if (allDates && allDates.length > 0 && Object.keys(exercisesByDay).length === 0) {
+      setExercisesByDay(
+        allDates.reduce((acc, day) => ({
+          ...acc,
+          [day]: [{ exerciseId: "", muscleGroups: [], setsArray: [{ weight: null, reps: null, rir: null }] }],
+        }), {})
+      );
+    }
+  }, [allDates, exercisesByDay]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch exercises and muscle groups
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -47,7 +51,62 @@ function SessionBuilderForm({ mesocycle }) {
     fetchData();
   }, []);
 
-  // Prepare react-select options
+useEffect(() => {
+  const fetchSessionsAndSets = async () => {
+    try {
+      // Fetch sessions for the current mesocycle
+      const sessionRes = await api.get(`/api/session/?mesocycle=${mesocycle.id}/`);
+      const sessions = sessionRes.data;
+
+      // Loop through each session to fetch the associated sets
+      for (const session of sessions) {
+        console.log("session id:", session.id);
+        const setsRes = await api.get(`/api/set/by-session/${session.id}/`);
+        const sets = setsRes.data;
+        console.log("sets:",sets);
+        // Create an object to group sets by exerciseId
+        const exerciseMap = {}; 
+
+        for (const set of sets) {
+          // If the exercise doesn't exist in exerciseMap, fetch the exercise details
+          if (!exerciseMap[set.exercise]) {
+            const exerciseRes = await api.get(`/api/exercise/${set.exercise}/`);
+            const exercise = exerciseRes.data;
+
+            exerciseMap[set.exercise] = {
+              exerciseId: set.exercise,
+              muscleGroups: exercise.muscle_groups || [],  // Add muscleGroups from API response
+              setsArray: []  // Array to hold all sets for this exercise
+            };
+          }
+
+          // Push the current set data into the setsArray for the respective exercise
+          exerciseMap[set.exercise].setsArray.push({
+            weight: set.weight,
+            reps: set.reps,
+            rir: set.rir,
+            sequence: set.sequence
+          });
+        console.log("ex map:" , exerciseMap);
+        }
+
+        // Now, you can update exercisesByDay by spreading previous state and adding new data
+        setExercisesByDay(prevExercisesByDay => ({
+          ...prevExercisesByDay,
+          [session.date]: Object.values(exerciseMap) // Update for this session's date
+        }));
+      }
+      console.log(exercisesByDay);
+    } catch (err) {
+      console.error("Error loading sessions and sets:", err);
+    }
+  };
+
+  fetchSessionsAndSets();
+}, [mesocycle.id]);
+
+  
+
   const exerciseOptions = exercises.map((exercise) => ({
     value: exercise.id,
     label: exercise.name,
@@ -58,15 +117,13 @@ function SessionBuilderForm({ mesocycle }) {
     label: mg.name,
   }));
 
-  // Add exercise to a specific day
   const handleAddExercise = (day) => {
     setExercisesByDay((prevExercises) => ({
       ...prevExercises,
-      [day]: [...prevExercises[day], { exerciseId: "", muscleGroups: [], sets: 1, weight: null, reps: null, rir: null }],
+      [day]: [...prevExercises[day], { exerciseId: "", muscleGroups: [], setsArray: [{ weight: null, reps: null, rir: null }] }],
     }));
   };
 
-  // Remove exercise from a specific day
   const handleRemoveExercise = (day, index) => {
     setExercisesByDay((prevExercises) => ({
       ...prevExercises,
@@ -74,7 +131,6 @@ function SessionBuilderForm({ mesocycle }) {
     }));
   };
 
-  // Handle exercise selection
   const handleExerciseChange = (day, index, selectedOption) => {
     const updatedExercises = exercisesByDay[day].map((exercise, i) => {
       if (i === index) {
@@ -83,7 +139,7 @@ function SessionBuilderForm({ mesocycle }) {
         return {
           ...exercise,
           exerciseId: selectedOption ? selectedOption.value : "",
-          muscleGroups: muscleGroupIds, // Update muscle groups
+          muscleGroups: muscleGroupIds,
         };
       }
       return exercise;
@@ -95,7 +151,6 @@ function SessionBuilderForm({ mesocycle }) {
     }));
   };
 
-  // Handle muscle group selection
   const handleMuscleGroupChange = (day, index, selectedGroups) => {
     const updatedExercises = exercisesByDay[day].map((exercise, i) => {
       if (i === index) {
@@ -109,199 +164,156 @@ function SessionBuilderForm({ mesocycle }) {
     }));
   };
 
-  // Handle set change
-  const handleSetChange = (day, index, sets) => {
-    const updatedExercises = exercisesByDay[day].map((exercise, i) => {
-      if (i === index) {
-        return { ...exercise, sets: sets ? parseInt(sets) : 1 }; // Ensure it's parsed as an integer
-      }
-      return exercise;
-    });
-    setExercisesByDay((prevExercises) => ({
-      ...prevExercises,
-      [day]: updatedExercises,
-    }));
-  };
-
-  // Handle weight, reps, and rir change
-  const handleWeightChange = (day, index, weight) => {
-    const updatedExercises = exercisesByDay[day].map((exercise, i) => {
-      if (i === index) {
-        return { ...exercise, weight: weight !== "" ? parseFloat(weight) : null };
-      }
-      return exercise;
-    });
-    setExercisesByDay((prevExercises) => ({
-      ...prevExercises,
-      [day]: updatedExercises,
-    }));
-  };
-
-  const handleRepsChange = (day, index, reps) => {
-    const updatedExercises = exercisesByDay[day].map((exercise, i) => {
-      if (i === index) {
-        return { ...exercise, reps: reps !== "" ? parseInt(reps) : null };
-      }
-      return exercise;
-    });
-    setExercisesByDay((prevExercises) => ({
-      ...prevExercises,
-      [day]: updatedExercises,
-    }));
-  };
-
-  const handleRirChange = (day, index, rir) => {
-    const updatedExercises = exercisesByDay[day].map((exercise, i) => {
-      if (i === index) {
-        return { ...exercise, rir: rir !== "" ? parseInt(rir) : null };
-      }
-      return exercise;
-    });
-    setExercisesByDay((prevExercises) => ({
-      ...prevExercises,
-      [day]: updatedExercises,
-    }));
-  };
-
-  // Calculate the date for each day of the current week
-  const getDateForDay = (dayIndex) => {
-    return addDays(currentWeek, dayIndex);
-  };
-
-  // Week navigation
-  const goToPreviousWeek = () => {
-    setCurrentWeek((prevWeek) => {
-      // Clear exercises for the previous week
-      setExercisesByDay(daysOfWeek.reduce((acc, day) => ({
-        ...acc,
-        [day]: [{ exerciseId: "", muscleGroups: [], sets: 0, weight: null, reps: null, rir: null }],
-      }), {}));
-      return subWeeks(prevWeek, 1);
+  // Add a new set to a specific exercise
+  const handleAddSet = (day, exerciseIndex) => {
+    setExercisesByDay((prevExercises) => {
+      const updatedExercises = [...prevExercises[day]];
+      updatedExercises[exerciseIndex].setsArray.push({ weight: null, reps: null, rir: null });
+      return { ...prevExercises, [day]: updatedExercises };
     });
   };
 
-  const goToNextWeek = () => {
-    setCurrentWeek((prevWeek) => {
-      // Clear exercises for the next week
-      setExercisesByDay(daysOfWeek.reduce((acc, day) => ({
-        ...acc,
-        [day]: [{ exerciseId: "", muscleGroups: [], sets: 0, weight: null, reps: null, rir: null }],
-      }), {}));
-      return addWeeks(prevWeek, 1);
+  // Handle set input changes
+  const handleSetChange = (day, exerciseIndex, setIndex, field, value) => {
+    setExercisesByDay((prevExercises) => {
+      const updatedExercises = [...prevExercises[day]];
+      updatedExercises[exerciseIndex].setsArray[setIndex] = {
+        ...updatedExercises[exerciseIndex].setsArray[setIndex],
+        [field]: value !== "" ? (field === "weight" ? parseFloat(value) : parseInt(value)) : null
+      };
+      return { ...prevExercises, [day]: updatedExercises };
     });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Create session data
-    const sessionsData = daysOfWeek.map((day, index) => ({
-      date: format(getDateForDay(index), 'yyyy-MM-dd'),
-      mesocycle: mesocycle.id, // Include mesocycle ID
-    }));
-
+  
+    // Step 1: Fetch existing sessions
+    const existingSessionsRes = await api.get(`/api/session/?mesocycle=${mesocycle.id}/`);
+    const existingSessions = existingSessionsRes.data;
+  
+    const sessionsData = allDates
+      .filter(day => exercisesByDay[day] && exercisesByDay[day].some(exercise => exercise.exerciseId))
+      .map(day => ({
+        date: day,
+        mesocycle: mesocycle.id,
+      }));
+  
     try {
-      const res = await api.post("/api/session/", sessionsData); // Send session data
-      console.log("Session saved successfully:", res.data);
+      for (const sessionData of sessionsData) {
+        // Step 2: Check if the session already exists
+        const existingSession = existingSessions.find(session => session.date === sessionData.date && session.mesocycle === sessionData.mesocycle);
+  
+        let sessionId;
+  
+        if (!existingSession) {
+          // If it doesn't exist, create the session
+          const res = await api.post("/api/session/", sessionData);
+          sessionId = res.data.id;
+        } else {
+          // If it exists, update the session
+          sessionId = existingSession.id;
+          await api.put(`/api/session/${sessionId}/`, sessionData);
+          console.log(`Session for ${sessionData.date} already exists and has been updated.`);
+          
+          // Optional: You may want to delete existing sets before adding the new ones to avoid duplicates
+          await api.delete(`/api/set/delete/?session=${sessionId}`);
+        }
+  
+        // Step 3: Handle the sets for the session
+        const exercisesForDay = exercisesByDay[sessionData.date];
+        for (const exercise of exercisesForDay) {
+          const setsData = exercise.setsArray.map((set, index) => ({
+            session: sessionId,
+            exercise: exercise.exerciseId,
+            weight: set.weight || 0,
+            reps: set.reps || 0,
+            rir: set.rir || 0,
+            sequence: index + 1,
+          }));
+  
+          for (const setData of setsData) {
+            await api.post("/api/set/", setData);
+          }
+        }
+      }
     } catch (err) {
-      console.error("Error saving session:", err);
+      console.error("Error saving session or sets:", err);
     }
   };
-
+  
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error.message}</div>;
 
   return (
     <div className="sessionbuilder-container">
-      {/* Left side: session builder form */}
       <div className="sessionbuilder-form">
         <h2>{mesocycle?.name || "Mesocycle Name"}</h2>
         <p>Start Date: {mesocycle?.start_date || "N/A"}</p>
         <p>End Date: {mesocycle?.end_date || "N/A"}</p>
 
         <div className="week-navigation">
-          <button onClick={goToPreviousWeek}>Previous Week</button>
-          <span>{format(currentWeek, 'MMMM dd')} - {format(addDays(currentWeek, 6), 'MMMM dd')}</span>
-          <button onClick={goToNextWeek}>Next Week</button>
+          <button onClick={() => setCurrentWeek((prev) => subWeeks(prev, 1))}>Previous Week</button>
+          <span>{format(currentWeek, 'MMMM dd')} - {format(addDays(currentWeek, 7), 'MMMM dd')}</span>
+          <button onClick={() => setCurrentWeek((prev) => addWeeks(prev, 1))}>Next Week</button>
         </div>
+
         <form onSubmit={handleSubmit}>
           {allDates
-            .filter((day) =>
-              isWithinInterval(new Date(day), { start: currentWeek, end: addDays(currentWeek, 7) }) // Check if the date is within the current week
-            )
-            .map((day, index) => (
-              <div key={index}>
-                <div key={day} className="day-section">
-                  <h3>{format(parseISO(day), 'EEEE')} - {format(getDateForDay(index), 'MMMM dd, yyyy')}</h3>
-                  
-                </div>
+            .filter(day => isWithinInterval(new Date(day), { start: currentWeek, end: addDays(currentWeek, 7) }))
+            .map((day) => (
+              <div key={day} className="day-section">
+                <h3>{format(parseISO(day), 'EEEE')} - {format(parseISO(day), 'MMMM dd, yyyy')}</h3>
+                {exercisesByDay[day].map((exercise, i) => (
+                  <div key={i} className="exercise-input">
+                    <Select
+                      options={exerciseOptions}
+                      value={exercise.exerciseId ? { value: exercise.exerciseId, label: exercises.find(e => e.id === exercise.exerciseId)?.name } : null}
+                      onChange={(selectedOption) => handleExerciseChange(day, i, selectedOption)}
+                      placeholder="Select Exercise"
+                      isClearable
+                    />
+                    <Select
+                      options={muscleGroupOptions}
+                      isMulti
+                      value={muscleGroupOptions.filter(mg => exercise.muscleGroups.includes(mg.value))}
+                      onChange={(selectedGroups) => handleMuscleGroupChange(day, i, selectedGroups)}
+                      placeholder="Select Muscle Groups"
+                    />
+
+                    {exercise.setsArray.map((set, j) => (
+                      <div key={j} className="set-input">
+                        <input
+                          type="number"
+                          value={set.weight || ""}
+                          onChange={(e) => handleSetChange(day, i, j, 'weight', e.target.value)}
+                          placeholder="Weight"
+                          step="0.1"
+                        />
+                        <input
+                          type="number"
+                          value={set.reps || ""}
+                          onChange={(e) => handleSetChange(day, i, j, 'reps', e.target.value)}
+                          placeholder="Reps"
+                        />
+                        <input
+                          type="number"
+                          value={set.rir || ""}
+                          onChange={(e) => handleSetChange(day, i, j, 'rir', e.target.value)}
+                          placeholder="RIR"
+                        />
+                      </div>
+                    ))}
+
+                    <button type="button" onClick={() => handleAddSet(day, i)}>Add Set</button>
+                    <button type="button" onClick={() => handleRemoveExercise(day, i)}>Remove Exercise</button>
+                  </div>
+                ))}
+                <button type="button" onClick={() => handleAddExercise(day)}>Add Exercise</button>
               </div>
             ))}
-
-        </form>
-        <form onSubmit={handleSubmit}>
-          {daysOfWeek.map((day, index) => (
-            <div key={day} className="day-section">
-              <h3>{day} - {format(getDateForDay(index), 'MMMM dd, yyyy')}</h3>
-              {exercisesByDay[day].map((exercise, i) => (
-                <div key={i} className="exercise-input">
-                  <Select
-                    options={exerciseOptions}
-                    onChange={(selectedOption) => handleExerciseChange(day, i, selectedOption)}
-                    placeholder="Select Exercise"
-                    isClearable
-                  />
-                  <Select
-                    options={muscleGroupOptions}
-                    isMulti
-                    value={muscleGroupOptions.filter(mg => exercise.muscleGroups.includes(mg.value))} // Set selected values
-                    onChange={(selectedGroups) => handleMuscleGroupChange(day, i, selectedGroups)}
-                    placeholder="Select Muscle Groups"
-                  />
-
-                  {/* Sets input */}
-                  <input
-                    type="number"
-                    value={exercise.sets || ""}
-                    onChange={(e) => handleSetChange(day, i, e.target.value)}
-                    placeholder="Sets"
-                  />
-
-                  {/* Weight input */}
-                  <input
-                    type="number"
-                    value={exercise.weight || ""}
-                    onChange={(e) => handleWeightChange(day, i, e.target.value)}
-                    placeholder="Weight"
-                    step="0.1"
-                  />
-
-                  {/* Reps input */}
-                  <input
-                    type="number"
-                    value={exercise.reps || ""}
-                    onChange={(e) => handleRepsChange(day, i, e.target.value)}
-                    placeholder="Reps"
-                  />
-
-                  {/* RIR input */}
-                  <input
-                    type="number"
-                    value={exercise.rir || ""}
-                    onChange={(e) => handleRirChange(day, i, e.target.value)}
-                    placeholder="RIR"
-                  />
-
-                  <button type="button" onClick={() => handleRemoveExercise(day, i)}>Remove</button>
-                </div>
-              ))}
-
-              <button type="button" onClick={() => handleAddExercise(day)}>Add Exercise</button>
-            </div>
-          ))}
-
-          <button type="submit">Save Session</button>
+          <button type="submit">Save Sessions</button>
         </form>
       </div>
 
@@ -310,16 +322,23 @@ function SessionBuilderForm({ mesocycle }) {
         <h3>Muscle Group Totals</h3>
         {/* Display total sets for each muscle group */}
         {muscleGroupList.map((muscleGroup) => {
-          const totalSets = daysOfWeek.reduce((total, day) => {
-            return total + exercisesByDay[day].reduce((dayTotal, exercise) => {
-              return dayTotal + (exercise.muscleGroups.includes(muscleGroup.id) ? (exercise.sets || 0) : 0);
+          const totalSets = allDates
+            .filter((day) =>
+              isWithinInterval(new Date(day), { start: currentWeek, end: addDays(currentWeek, 7) }) // Check if the date is within the current week
+            )
+            .reduce((total, day) => {
+              return total + exercisesByDay[day].reduce((dayTotal, exercise) => {
+                // Calculate total sets for the muscle group for the current exercise
+                const setsCount = exercise.setsArray ? exercise.setsArray.length : 0; // Get the number of sets for the exercise
+                return dayTotal + (exercise.muscleGroups.includes(muscleGroup.id) ? setsCount : 0);
+              }, 0);
             }, 0);
-          }, 0);
-          return (
-            <div key={muscleGroup.id}>
+
+          return totalSets > 0 ?  (
+          <div key={muscleGroup.id}>
               <strong>{muscleGroup.name}:</strong> {Number(totalSets)} sets
             </div>
-          );
+        ): null;
         })}
       </div>
     </div>
