@@ -32,7 +32,7 @@ class Session(models.Model):
   mesocycle = models.ForeignKey(Mesocycle, on_delete = models.SET_NULL, null = True, blank = True)
   user = models.ForeignKey(User, on_delete=models.CASCADE)
   date = models.DateField()
-  notes = models.TextField(blank=True)
+  notes = models.TextField(blank=True, null=True)
 
   def __str__self(self):
     return "{self.name} - ({self.date})"
@@ -40,10 +40,10 @@ class Session(models.Model):
 class Set(models.Model):
   session = models.ForeignKey(Session, on_delete=models.CASCADE, blank = True, null = True)
   exercise = models.ForeignKey(Exercise, on_delete=models.CASCADE)
-  weight = models.PositiveIntegerField()
-  reps = models.PositiveIntegerField()
+  weight = models.PositiveIntegerField(blank=True, null=True)
+  reps = models.PositiveIntegerField(blank=True, null=True)
   sequence = models.PositiveIntegerField()
-  rir = models.PositiveIntegerField()
+  rir = models.PositiveIntegerField(blank=True, null=True)
 
   class Meta:
     ordering = ['sequence']

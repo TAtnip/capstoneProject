@@ -32,7 +32,7 @@ function BuildMesoForm({ route, method }) {
       if (res.status === 201) {
         alert("Mesocycle Created")
         const id = res.data.id;
-        navigate(`/sessionselect/${id}`);
+        navigate(`/sessionbuilder/${id}`);
       } else alert("failed to make mesocycle");
 
     })

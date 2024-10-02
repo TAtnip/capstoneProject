@@ -6,7 +6,7 @@ function Mesocycle({mesocycle}) {
   const navigate = useNavigate();
 
   const handleModify =() => {
-    navigate(`/sessionselect/${mesocycle.id}`)
+    navigate(`/sessionbuilder/${mesocycle.id}`)
   }
   return (
     <div className="mesocycle-container">

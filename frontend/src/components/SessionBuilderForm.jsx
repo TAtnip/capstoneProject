@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Select from 'react-select';
 import api from '../api';
 import '../styles/SessionBuilderForm.css';
@@ -14,7 +15,7 @@ function SessionBuilderForm({ mesocycle }) {
     start: parseISO(mesocycle.start_date),
     end: parseISO(mesocycle.end_date)
   }).map(date => format(date, 'yyyy-MM-dd'));
-
+  const navigate = useNavigate();
   const [exercises, setExercises] = useState([]);
   const [muscleGroupList, setMuscleGroupList] = useState([]);
   const [exercisesByDay, setExercisesByDay] = useState({});
@@ -51,59 +52,60 @@ function SessionBuilderForm({ mesocycle }) {
     fetchData();
   }, []);
 
-useEffect(() => {
-  const fetchSessionsAndSets = async () => {
-    try {
-      // Fetch sessions for the current mesocycle
-      const sessionRes = await api.get(`/api/session/?mesocycle=${mesocycle.id}/`);
-      const sessions = sessionRes.data;
-
-      // Loop through each session to fetch the associated sets
-      for (const session of sessions) {
-        console.log("session id:", session.id);
-        const setsRes = await api.get(`/api/set/by-session/${session.id}/`);
-        const sets = setsRes.data;
-        console.log("sets:",sets);
-        // Create an object to group sets by exerciseId
-        const exerciseMap = {}; 
-
-        for (const set of sets) {
-          // If the exercise doesn't exist in exerciseMap, fetch the exercise details
-          if (!exerciseMap[set.exercise]) {
-            const exerciseRes = await api.get(`/api/exercise/${set.exercise}/`);
-            const exercise = exerciseRes.data;
-
-            exerciseMap[set.exercise] = {
-              exerciseId: set.exercise,
-              muscleGroups: exercise.muscle_groups || [],  // Add muscleGroups from API response
-              setsArray: []  // Array to hold all sets for this exercise
-            };
+  useEffect(() => {
+    const fetchSessionsAndSets = async () => {
+      try {
+        // Fetch sessions for the current mesocycle
+        const sessionRes = await api.get(`/api/session/?mesocycle=${mesocycle.id}/`);
+        const sessions = sessionRes.data;
+  
+        // Loop through each session to fetch the associated sets
+        for (const session of sessions) {
+          const setsRes = await api.get(`/api/set/by-session/${session.id}/`);
+          const sets = setsRes.data;
+  
+          // Create an object to group sets by exerciseId
+          const exerciseMap = {}; 
+  
+          for (const set of sets) {
+            // If the exercise doesn't exist in exerciseMap, fetch the exercise details
+            if (!exerciseMap[set.exercise]) {
+              const exerciseRes = await api.get(`/api/exercise/${set.exercise}/`);
+              const exercise = exerciseRes.data;
+  
+              // Fetch the muscle groups from the exercise data
+              const muscleGroupIds = exercise.muscle_groups.map(mg => mg.id);
+  
+              exerciseMap[set.exercise] = {
+                exerciseId: set.exercise,
+                muscleGroups: muscleGroupIds,  // Add muscleGroups to state
+                setsArray: []  // Array to hold all sets for this exercise
+              };
+            }
+  
+            // Push the current set data into the setsArray for the respective exercise
+            exerciseMap[set.exercise].setsArray.push({
+              weight: set.weight,
+              reps: set.reps,
+              rir: set.rir,
+              sequence: set.sequence
+            });
           }
-
-          // Push the current set data into the setsArray for the respective exercise
-          exerciseMap[set.exercise].setsArray.push({
-            weight: set.weight,
-            reps: set.reps,
-            rir: set.rir,
-            sequence: set.sequence
-          });
-        console.log("ex map:" , exerciseMap);
+  
+          // Now, update exercisesByDay by adding the exercises and muscle groups for this session's date
+          setExercisesByDay(prevExercisesByDay => ({
+            ...prevExercisesByDay,
+            [session.date]: Object.values(exerciseMap)
+          }));
         }
-
-        // Now, you can update exercisesByDay by spreading previous state and adding new data
-        setExercisesByDay(prevExercisesByDay => ({
-          ...prevExercisesByDay,
-          [session.date]: Object.values(exerciseMap) // Update for this session's date
-        }));
+      } catch (err) {
+        console.error("Error loading sessions and sets:", err);
       }
-      console.log(exercisesByDay);
-    } catch (err) {
-      console.error("Error loading sessions and sets:", err);
-    }
-  };
-
-  fetchSessionsAndSets();
-}, [mesocycle.id]);
+    };
+  
+    fetchSessionsAndSets();
+  }, [mesocycle.id]);
+  
 
   
 
@@ -188,7 +190,7 @@ useEffect(() => {
   const handleSubmit = async (e) => {
     e.preventDefault();
   
-    // Step 1: Fetch existing sessions
+    // Fetch existing sessions
     const existingSessionsRes = await api.get(`/api/session/?mesocycle=${mesocycle.id}/`);
     const existingSessions = existingSessionsRes.data;
   
@@ -201,7 +203,7 @@ useEffect(() => {
   
     try {
       for (const sessionData of sessionsData) {
-        // Step 2: Check if the session already exists
+        // Check if the session already exists
         const existingSession = existingSessions.find(session => session.date === sessionData.date && session.mesocycle === sessionData.mesocycle);
   
         let sessionId;
@@ -216,7 +218,7 @@ useEffect(() => {
           await api.put(`/api/session/${sessionId}/`, sessionData);
           console.log(`Session for ${sessionData.date} already exists and has been updated.`);
           
-          // Optional: You may want to delete existing sets before adding the new ones to avoid duplicates
+          // Delete existing sets before adding the new ones to avoid duplicates
           await api.delete(`/api/set/delete/?session=${sessionId}`);
         }
   
@@ -237,6 +239,7 @@ useEffect(() => {
           }
         }
       }
+      navigate(`/visualize/${mesocycle.id}`);
     } catch (err) {
       console.error("Error saving session or sets:", err);
     }
@@ -317,7 +320,7 @@ useEffect(() => {
         </form>
       </div>
 
-      {/* Right side: muscle group totals */}
+      {/* Right side: muscle group totals, make into it's own component */}
       <div className="muscle-group-totals">
         <h3>Muscle Group Totals</h3>
         {/* Display total sets for each muscle group */}

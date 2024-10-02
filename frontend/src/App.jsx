@@ -8,7 +8,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
 import BuildMeso from "./pages/BuildMeso";
 import SessionBuilder from "./pages/SessionBuilder";
-import SessionSelect from "./pages/SessionSelect";
+import Visuals from "./pages/Visuals";
 
 function Logout() {
   localStorage.clear()
@@ -40,7 +40,7 @@ function App() {
         <Route path="/register" element={<RegisterAndLogout />} /> 
         <Route path="/buildmeso" element={<ProtectedRoute><BuildMeso /></ProtectedRoute>}/>
         <Route path="/sessionbuilder/:id" element={<ProtectedRoute><SessionBuilder /></ProtectedRoute>}/>
-        <Route path="/sessionselect/:id" element={<ProtectedRoute><SessionSelect /></ProtectedRoute>}/>
+        <Route path="/visuals/:id" element={<ProtectedRoute><Visuals /></ProtectedRoute>}/>
         <Route path="*" element={<NotFound />}/>
       </Routes>
     </BrowserRouter>
