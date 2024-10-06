@@ -1,5 +1,5 @@
 import React from 'react';
-import '../styles/ToggleSwitch.css'; // Ensure this CSS file is linked to your component
+import '../styles/ToggleSwitch.css'; 
 
 function ToggleSwitch({ isPLView, toggleView }) {
   return (

@@ -6,13 +6,13 @@ function LiftDropDown({ selectedMesocycle, setSelectedExercises }) {
   const [exerciseList, setExerciseList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [selectedOptions, setSelectedOptions] = useState([]); // Initialize as an array
+  const [selectedOptions, setSelectedOptions] = useState([]);
 
   useEffect(() => {
     // Only make the API call if selectedMesocycle is not null
     if (selectedMesocycle && selectedMesocycle.id) {
       const fetchLifts = async () => {
-        setLoading(true); // Start loading
+        setLoading(true); 
         try {
           const sessionRes = await api.get(`/api/session/?mesocycle=${selectedMesocycle.id}/`);
           const sessions = sessionRes.data;
@@ -32,7 +32,7 @@ function LiftDropDown({ selectedMesocycle, setSelectedExercises }) {
         } catch (err) {
           setError(err);
         } finally {
-          setLoading(false); // Stop loading
+          setLoading(false); 
         }
       };
       fetchLifts();
@@ -43,11 +43,11 @@ function LiftDropDown({ selectedMesocycle, setSelectedExercises }) {
   if (error) return <div>Error: {error.message}</div>;
 
   const handleLiftChange = (selectedOptions) => {
-    setSelectedOptions(selectedOptions); // Update local state for selected options
+    setSelectedOptions(selectedOptions); // Update local state
     const selectedExercises = selectedOptions.map(option => {
       return exerciseList.find(exercise => exercise.id === option.value);
     });
-    setSelectedExercises(selectedExercises); // Update the parent state
+    setSelectedExercises(selectedExercises); // Update parent state
   };
 
   return (

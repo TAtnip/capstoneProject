@@ -48,3 +48,21 @@ body {
 .menu-icon:hover {
   background-color: rgb(72, 153, 153); /* Changes background color on hover */
 }
+
+.plan-track-analyze {
+  display: flex;
+}
+.plan-track-analyze .nav-link {
+  padding: 0.5rem;
+  margin: 0.5rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.nav-link:hover {
+  background-color: rgb(72, 153, 153);
+  border-radius: 1rem;
+  
+
+}
+

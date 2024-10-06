@@ -5,7 +5,6 @@ import Mesocycle from "../components/Mesocycle";
 import "../styles/BuildMeso.css";
 
 function BuildMesoForm({ route, method }) {
-  const [user_id, setUser_id] = useState("");
   const [name, setName] = useState("");
   const [start_date, setStart_date] = useState("");
   const [end_date, setEnd_date] = useState("");

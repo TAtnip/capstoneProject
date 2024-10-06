@@ -6,7 +6,7 @@ function MesocycleDropDown({ id, setSelectedMesocycle }) {
   const [mesocycleList, setMesocycleList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedOption, setSelectedOption] = useState(null); // This will store the current selected option
+  const [selectedOption, setSelectedOption] = useState(null); // store the current selected option
 
   useEffect(() => {
     const fetchMesocycles = async () => {
@@ -23,7 +23,7 @@ function MesocycleDropDown({ id, setSelectedMesocycle }) {
             value: initialSelectedMesocycle.id,
             label: initialSelectedMesocycle.name,
           };
-          setSelectedOption(selectedOption); // Set the dropdown's selected option
+          setSelectedOption(selectedOption); 
           setSelectedMesocycle(initialSelectedMesocycle); // Pass the selected mesocycle to the parent
         }
 
@@ -55,7 +55,7 @@ function MesocycleDropDown({ id, setSelectedMesocycle }) {
     <Select
       options={mesocycleOptions}
       value={selectedOption}
-      onChange={handleMesocycleChange} // Handle dropdown changes
+      onChange={handleMesocycleChange} 
       placeholder="Select Mesocycle"
     />
   );

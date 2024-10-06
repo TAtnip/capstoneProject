@@ -16,6 +16,12 @@ const Navbar = () => {
       <div className="main-logo">
         <Link to="/"><img src ="/logo.png" className="navbar-logo"/></Link>
       </div>
+      <div className="plan-track-analyze">
+        <b><Link to="/buildmeso" className="nav-link">Plan</Link>
+        <Link to="/sessionbuilder/1" className="nav-link">Track</Link>
+        <Link to="/visuals/1" className="nav-link">Analyze</Link>
+        </b>
+      </div>
       <div className="dropdown">
         <Dropdown label={<img src="/dropdownbutton.png" alt="Menu Icon" className="menu-icon" />}
           inline={true}

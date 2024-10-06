@@ -2,21 +2,22 @@ import { useState, useEffect } from 'react';
 import api from '../api';
 import Select from 'react-select';
 
-function LiftDropDown({ selectedMesocycle, setSelectedExercises }) {
-  const [exerciseList, setExerciseList] = useState([]);
+function MuscleDropDown({ selectedMesocycle, setSelectedMuscleGroups }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [selectedOptions, setSelectedOptions] = useState([]); // Initialize as an array
+  const [selectedOptions, setSelectedOptions] = useState([]); 
+  const [muscleGroupList, setMuscleGroupList] = useState([]);
 
   useEffect(() => {
-    // Only make the API call if selectedMesocycle is not null
     if (selectedMesocycle && selectedMesocycle.id) {
       const fetchLifts = async () => {
-        setLoading(true); // Start loading
+        setLoading(true); 
         try {
           const sessionRes = await api.get(`/api/session/?mesocycle=${selectedMesocycle.id}/`);
           const sessions = sessionRes.data;
           const exercises = {};
+          const uniqueMuscleGroups = new Set();
+
           for (const session of sessions) {
             const setsRes = await api.get(`/api/set/by-session/${session.id}/`);
             const sets = setsRes.data;
@@ -24,15 +25,23 @@ function LiftDropDown({ selectedMesocycle, setSelectedExercises }) {
             for (const set of sets) {
               const exerciseRes = await api.get(`/api/exercise/${set.exercise}/`);
               const exercise = exerciseRes.data;
-              exercises[set.exercise] = exercise; // Store exercise in the object
+
+              exercises[set.exercise] = exercise;
+
+              // Add both the id and name to uniqueMuscleGroups
+              exercise.muscle_groups.forEach(mg => {
+                uniqueMuscleGroups.add(JSON.stringify(mg)); // Use JSON.stringify to ensure uniqueness 
+              });
             }
           }
 
-          setExerciseList(Object.values(exercises));
+          // Parse muscle groups back into objects and set state
+          const muscleGroupArray = Array.from(uniqueMuscleGroups).map(mg => JSON.parse(mg));
+          setMuscleGroupList(muscleGroupArray);
         } catch (err) {
           setError(err);
         } finally {
-          setLoading(false); // Stop loading
+          setLoading(false);
         }
       };
       fetchLifts();
@@ -42,26 +51,26 @@ function LiftDropDown({ selectedMesocycle, setSelectedExercises }) {
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error.message}</div>;
 
-  const handleLiftChange = (selectedOptions) => {
+  const handleMuscleChange = (selectedOptions) => {
     setSelectedOptions(selectedOptions); // Update local state for selected options
-    const selectedExercises = selectedOptions.map(option => {
-      return exerciseList.find(exercise => exercise.id === option.value);
+    const selectedMuscleGroup = selectedOptions.map(option => {
+      return muscleGroupList.find(muscle => muscle.id === option.value);
     });
-    setSelectedExercises(selectedExercises); // Update the parent state
+    setSelectedMuscleGroups(selectedMuscleGroup); // Update parent state
   };
 
   return (
     <Select
-      options={exerciseList.map(exercise => ({
-        value: exercise.id,
-        label: exercise.name
+      options={muscleGroupList.map(muscleGroup => ({
+        value: muscleGroup.id,
+        label: muscleGroup.name
       }))}
       value={selectedOptions}
-      onChange={handleLiftChange}
+      onChange={handleMuscleChange}
       isMulti
-      placeholder="Select an Exercise"
+      placeholder="Select a muscle group"
     />
   );
 }
 
-export default LiftDropDown;
+export default MuscleDropDown;

@@ -9,6 +9,7 @@ import Navbar from "./components/Navbar";
 import BuildMeso from "./pages/BuildMeso";
 import SessionBuilder from "./pages/SessionBuilder";
 import Visuals from "./pages/Visuals";
+import "./styles/App.css";
 
 function Logout() {
   localStorage.clear()
