@@ -41,7 +41,7 @@ function App() {
         <Route path="/register" element={<RegisterAndLogout />} /> 
         <Route path="/buildmeso" element={<ProtectedRoute><BuildMeso /></ProtectedRoute>}/>
         <Route path="/sessionbuilder/:id" element={<ProtectedRoute><SessionBuilder /></ProtectedRoute>}/>
-        <Route path="/visuals/:id" element={<ProtectedRoute><Visuals /></ProtectedRoute>}/>
+        <Route path="/visuals/" element={<ProtectedRoute><Visuals /></ProtectedRoute>}/>
         <Route path="*" element={<NotFound />}/>
       </Routes>
     </BrowserRouter>

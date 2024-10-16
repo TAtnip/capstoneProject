@@ -3,19 +3,21 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .models import MuscleGroup, Set, Exercise, Mesocycle, Session, PerformanceMetric
-from .serializers import UserSerializer, MuscleGroupSerializer, SetSerializer, ExerciseSerializer, MesocycleSerializer, SessionSerializer, PerformanceMetricSerializer
+from .serializers import UserSerializer, MuscleGroupSerializer, SetSerializer, ExerciseSerializer, MesocycleSerializer, SessionSerializer, PerformanceMetricSerializer, FullSetSerializer
 from django.contrib.auth.models import User
 
+# Views handle the HTTP requests/responses by using the information and structure of the model and the serializer class for conversion to JSON
 class CreateUserView(generics.CreateAPIView):
   queryset = User.objects.all()
   serializer_class = UserSerializer
   permission_classes = [AllowAny]
 
+
 class MesocycleDetailUpdate(generics.RetrieveUpdateAPIView):
     queryset = Mesocycle.objects.all()
     serializer_class = MesocycleSerializer
     def get_queryset(self):
-      #this will give us the user object that is authenticated, can use this to get the data
+      #this will give the user object that is authenticated, can use this to get the data
       authenticated_user = self.request.user
       return Mesocycle.objects.filter(user = authenticated_user)
   
@@ -28,12 +30,10 @@ class MesocycleDetailUpdate(generics.RetrieveUpdateAPIView):
 
 class MesocycleListCreate(generics.ListCreateAPIView):
 
-  #.objects.all() gives all the data
   serializer_class = MesocycleSerializer
   permission_classes = [IsAuthenticated]
 
   def get_queryset(self):
-    #this will give us the user object that is authenticated, can use this to get the data
     authenticated_user = self.request.user
     return Mesocycle.objects.filter(user = authenticated_user)
 
@@ -46,12 +46,10 @@ class MesocycleListCreate(generics.ListCreateAPIView):
 
 class SessionListCreate(generics.ListCreateAPIView):
 
-  #.objects.all() gives all the data
   serializer_class = SessionSerializer
   permission_classes = [IsAuthenticated]
 
   def get_queryset(self):
-    #this will give us the user object that is authenticated, can use this to get the data
     authenticated_user = self.request.user
     return Session.objects.filter(user = authenticated_user)
 
@@ -89,11 +87,20 @@ class SetDeleteView(generics.DestroyAPIView):
         return Response({"error": "No session ID provided."}, status=status.HTTP_400_BAD_REQUEST)
 
 class ExerciseListCreate(generics.ListCreateAPIView):
+    serializer_class = ExerciseSerializer
+    permission_classes = [AllowAny]
 
-  #.objects.all() gives all the data
-  serializer_class = ExerciseSerializer
-  permission_classes = [AllowAny]
-  queryset =Exercise.objects.all()
+    def get_queryset(self):
+        queryset = Exercise.objects.all()  # Default to returning all exercises
+
+        # Get the muscle_group query parameter (can be a list or a single id)
+        muscle_group_ids = self.request.query_params.getlist('muscle_group', None)
+
+        if muscle_group_ids:
+            # Filter exercises by the selected muscle groups
+            queryset = queryset.filter(muscle_groups__id__in=muscle_group_ids).distinct()
+
+        return queryset
 
 class ExerciseRetrieve(generics.RetrieveAPIView):
     queryset = Exercise.objects.all()
@@ -145,6 +152,26 @@ class SetListCreate(generics.ListCreateAPIView):
         else:
             print(serializer.errors)
 
+class SetListByExerciseAndDate(generics.ListAPIView):
+    serializer_class = FullSetSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        # Get authenticated user and query parameters
+        authenticated_user = self.request.user
+        exercise_id = self.request.query_params.get('exercise')
+        start_date = self.request.query_params.get('start_date')
+        end_date = self.request.query_params.get('end_date')
+
+        queryset = Set.objects.filter(session__user=authenticated_user)
+
+        if exercise_id:
+            queryset = queryset.filter(exercise_id=exercise_id)
+        if start_date and end_date:
+            queryset = queryset.filter(session__date__range=[start_date, end_date])
+
+        return queryset
+
 class SessionListAPIView(generics.ListAPIView):
     serializer_class = SessionSerializer
 
@@ -169,3 +196,20 @@ class SetListView(generics.ListAPIView):
         else:
             print("No session ID provided.")
         return Set.objects.none()
+    
+class PerformanceMetricList(generics.ListAPIView):
+    serializer_class = PerformanceMetricSerializer
+
+    def get_queryset(self):
+        exercise = self.request.query_params.get('exercise')
+        start_date = self.request.query_params.get('start_date')
+        end_date = self.request.query_params.get('end_date')
+        
+
+        if exercise and start_date and end_date:
+            return PerformanceMetric.objects.filter(
+                exercise__id=exercise,
+                session__date__range=[start_date, end_date]  # Filter by session date, useful for calculating muscle group performance as a whole
+            )
+        # If invalid parameters are passed, otherwise return an empty response
+        return PerformanceMetric.objects.none()

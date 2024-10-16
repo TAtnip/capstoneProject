@@ -1,0 +1,32 @@
+/* visuals.css */
+.visuals-container {
+  max-width: 60rem; 
+  margin: 1rem auto; 
+  padding: 1.5rem;
+  background-color: white;
+  border-radius: 1rem;
+}
+
+.visuals-title {
+  text-align: center;
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+.visuals-dropdowns {
+  display: flex;
+  justify-content: center; /* Center all content */
+  align-items: center;
+  gap: 20px; /* Add spacing between the elements */
+}
+
+.left-items,
+.right-items {
+  display: flex;
+  gap: 20px; /* Adjust the spacing between dropdowns */
+}
+
+.visuals-dropdowns .center {
+  margin: 0 auto; /* Keep the button centered */
+}
+

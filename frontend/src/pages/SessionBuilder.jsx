@@ -1,4 +1,3 @@
-import "../styles/SessionBuilder.css";
 import { useParams } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import api from "../api";

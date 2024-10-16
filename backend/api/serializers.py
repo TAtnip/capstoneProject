@@ -8,7 +8,7 @@ class UserSerializer(serializers.ModelSerializer):
     model = User
     fields = ["id", "username", "password"]
 
-    # This will make sure nobody can read what the password is.
+    # This assures nobody can read the password
     extra_kwargs = {"password": {"write_only":True}}
 
   def create(self, validated_data):
@@ -38,23 +38,42 @@ class MesocycleSerializer(serializers.ModelSerializer):
 class SessionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Session
-        fields = ["id", "mesocycle", "date"]  # Exclude 'name' and 'notes'
+        fields = ["id", "mesocycle", "date"]  # Exclude 'name' and 'notes' as there was no need
         extra_kwargs = {
             "user": {"read_only": True},
-            "name": {"required": False},  # Make 'name' optional
-            "notes": {"required": False}   # Make 'notes' optional
+            "name": {"required": False},  
+            "notes": {"required": False}   
         }
 
 class SetSerializer(serializers.ModelSerializer):
+
   class Meta:
     model = Set
     fields = ["id","session","exercise","weight","reps","sequence","rir","sequence"]
+    extra_kwargs = {
+        "weight": {"read_only": True},
+        "reps": {"required": False}, 
+        "rir": {"required": False}   
+    }
+
+class FullSetSerializer(serializers.ModelSerializer):
+    session = SessionSerializer()
+
+    class Meta:
+        model = Set
+        fields = ["id", "session", "exercise", "weight", "reps", "sequence", "rir"]
 
 
 class PerformanceMetricSerializer(serializers.ModelSerializer):
-  class Meta:
-    model = PerformanceMetric
-    fields = ["id","user","exercise","one_rep_max","date_predicted"]
-    extra_kwargs = {"user":{"read_only":True}}
+    session_date = serializers.DateField(source='session.date', read_only=True)  # Add session date as a read-only field
+    exercise = ExerciseSerializer()
+
+    class Meta:
+        model = PerformanceMetric
+        fields = ["id", "user", "exercise", "one_rep_max", "session", "session_date"]  # Include the session field and session_date
+        extra_kwargs = {
+            "user": {"read_only": True},
+            "session": {"read_only": True},  # Session shouldn't be editable from this endpoint
+        }
 
 

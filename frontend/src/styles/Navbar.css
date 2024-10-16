@@ -6,10 +6,10 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background-color: #d6d6d6;
-  font-family: Arial, sans-serif;
+  background-color: #000000;
   padding: 0px 0.1rem;
   margin: 0px;
+  color: white;
 }
 
 /* Logo styling */
@@ -32,6 +32,7 @@ body {
 .menu-icon {
   height: 3rem;
   width: auto;
+  background-color: white;
   transition: background-color 0.3s ease;
   border-radius: .5rem;
 }
@@ -39,19 +40,21 @@ body {
 .dropdown button {
   border: none; /* Removes default border */
   padding: 0; /* Removes padding */
-  margin-right: 0.4rem; /* Removes margin */
+  margin-right: 0.4rem; /* Adjust margin */
   background: none; /* Ensures no background */
   cursor: pointer; /* Indicates it's clickable */
   border-radius: 1rem;
 }
+
 /* Hover effect for the menu icon */
 .menu-icon:hover {
-  background-color: rgb(72, 153, 153); /* Changes background color on hover */
+  background-color: #004d9f; /* Changes background color on hover */
 }
 
 .plan-track-analyze {
   display: flex;
 }
+
 .plan-track-analyze .nav-link {
   padding: 0.5rem;
   margin: 0.5rem;
@@ -60,9 +63,32 @@ body {
 }
 
 .nav-link:hover {
-  background-color: rgb(72, 153, 153);
+  background-color: #004d9f;
   border-radius: 1rem;
-  
+}
 
+/* Navbar.css */
+.navbar .dropdown .dropdown-menu {
+  background-color: white;
+  border: 1px solid #ddd; /* Optional: Add a subtle border to differentiate it */
+  border-radius: 0.5rem; /* Optional: Add border-radius */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Optional: Add shadow */
+}
+.navbar .dropdown .dropdown-container {
+  background-color: white;
+  margin: -1.1rem 0 0 0;
+  padding:0rem;
+  border: 0.3rem solid #004d9f;
+  border-radius: 0.3rem;
+  list-style: none;
+}
+.navbar .dropdown .dropdown-item {
+  color: black !important; /* Set text color to black for contrast */
+  padding: 0.5rem 0.5rem; /* Add padding for better spacing */
+}
+
+.navbar .dropdown .dropdown-item:hover {
+  background-color: #f0f0f0 !important; /* Change the background on hover */
+  border-radius: 0.25rem; /* Optional: Add rounding on hover */
 }
 

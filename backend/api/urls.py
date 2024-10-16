@@ -23,6 +23,10 @@ urlpatterns = [
     # Set related endpoints
     path("set/", views.SetListCreate.as_view(), name="set_list_create"),
     path("set/by-session/<int:session_id>/", views.SetListView.as_view(), name="set_by_session"),
-    path("set/delete/", views.SetDeleteView.as_view(), name="delete_set")
+    path("set/delete/", views.SetDeleteView.as_view(), name="delete_set"),
+    path("sets/", views.SetListByExerciseAndDate.as_view(), name="set_list_ex_date"),
+
+    # Performance Metric endpoints
+    path('performancemetrics/', views.PerformanceMetricList.as_view(), name='performance-metric-list'),   
 ]
 

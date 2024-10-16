@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../api';
-import Select from 'react-select';
+import Select, { components } from 'react-select';
 
 function LiftDropDown({ selectedMesocycle, setSelectedExercises }) {
   const [exerciseList, setExerciseList] = useState([]);
@@ -9,10 +9,9 @@ function LiftDropDown({ selectedMesocycle, setSelectedExercises }) {
   const [selectedOptions, setSelectedOptions] = useState([]);
 
   useEffect(() => {
-    // Only make the API call if selectedMesocycle is not null
     if (selectedMesocycle && selectedMesocycle.id) {
       const fetchLifts = async () => {
-        setLoading(true); 
+        setLoading(true);
         try {
           const sessionRes = await api.get(`/api/session/?mesocycle=${selectedMesocycle.id}/`);
           const sessions = sessionRes.data;
@@ -32,22 +31,53 @@ function LiftDropDown({ selectedMesocycle, setSelectedExercises }) {
         } catch (err) {
           setError(err);
         } finally {
-          setLoading(false); 
+          setLoading(false);
         }
       };
       fetchLifts();
     }
   }, [selectedMesocycle]);
 
+  const handleLiftChange = (selectedOption) => {
+    const isOptionSelected = selectedOptions.some(option => option.value === selectedOption.value);
+    
+    // Toggle the selected option
+    const updatedSelected = isOptionSelected
+      ? selectedOptions.filter(option => option.value !== selectedOption.value) // Remove if already selected
+      : [...selectedOptions, selectedOption]; // Add to selected options
+
+    setSelectedOptions(updatedSelected); // Update local state
+
+    // Map to the corresponding exercises
+    const selectedExercises = updatedSelected.map(option => 
+      exerciseList.find(exercise => exercise.id === option.value)
+    );
+
+    setSelectedExercises(selectedExercises); // Update parent state
+  };
+
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error.message}</div>;
 
-  const handleLiftChange = (selectedOptions) => {
-    setSelectedOptions(selectedOptions); // Update local state
-    const selectedExercises = selectedOptions.map(option => {
-      return exerciseList.find(exercise => exercise.id === option.value);
-    });
-    setSelectedExercises(selectedExercises); // Update parent state
+  // Custom Checkbox Option Component
+  const CheckboxOption = (props) => {
+    const isSelected = selectedOptions.some(option => option.value === props.data.value);
+
+    return (
+      <components.Option {...props}>
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={() => null} // Prevent the default onChange event
+          onClick={() => handleLiftChange(props.data)} // Manually handle the selection toggle
+        />
+        <label>{props.data.label}</label>
+      </components.Option>
+    );
+  };
+  const getValueLabel = () => {
+    const count = selectedOptions.length;
+    return `${count} ${count === 1 ? 'exercise selected' : 'exercises selected'}`;
   };
 
   return (
@@ -56,10 +86,13 @@ function LiftDropDown({ selectedMesocycle, setSelectedExercises }) {
         value: exercise.id,
         label: exercise.name
       }))}
-      value={selectedOptions}
-      onChange={handleLiftChange}
+      value={null} // Show selected options in the input field
+      onChange={() => null} // Disable default onChange, as we handle it via checkboxes
       isMulti
-      placeholder="Select an Exercise"
+      closeMenuOnSelect={false} // Keep the dropdown open when selecting/deselecting
+      hideSelectedOptions={false} // Show the selected options in the dropdown with checkboxes
+      components={{ Option: CheckboxOption }} // Use custom checkbox option component
+      placeholder={getValueLabel()}
     />
   );
 }

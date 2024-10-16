@@ -1,13 +1,26 @@
-.grid-container {
+/* Home.css */
+.home-container {
   display: flex;
-}
-
-.grid-container .grids {
-  flex-grow: 1;
-  text-align: center;
-}
-
-.grid-container .grids .button-container {
-  display: flex;
+  width: 60%;
+  margin: 1.5rem auto;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
   flex-direction: column;
+  text-align: left; /* Change text alignment to left */
+  color: rgb(255, 255, 255);
+  align-items: flex-start; /* Align items to the start (left) */
 }
+
+.home-container img {
+  width: 105%; /* Adjust the width as needed */
+  height: auto; /* Maintain aspect ratio */
+  margin: 1.2rem; /* Add margin for spacing */
+  border-radius: 1rem;
+}
+
+.text-container {
+  margin-left: -12rem ; /* Optional: Adjust margin if needed */
+  font-size: 3rem;
+}
+
+

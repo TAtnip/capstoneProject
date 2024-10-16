@@ -26,7 +26,7 @@ function BuildMesoForm({ route, method }) {
 
   const createMesocycle = (e) => {
     e.preventDefault()
-    
+
     api.post(route, { name, start_date, end_date, description }).then((res) => {
       if (res.status === 201) {
         alert("Mesocycle Created")
@@ -38,57 +38,65 @@ function BuildMesoForm({ route, method }) {
       .catch((err) => alert(err));
   };
 
-  return ( <div>
-  <div>
-    <h2>Mesocycles</h2>
-    {mesocycles.map((mesocycle) => (
-      <Mesocycle mesocycle={mesocycle} key={mesocycle.id}/>
-    ))}
-  </div>
-    <h2>Build a New Mesocycle</h2>
+  return (
+  <div className='mesocycle-container'>
+
+
+
+
+
+    <div className = 'mesocycle-form'>
+    <h2>Build a new Mesocycle</h2>
     <form onSubmit={createMesocycle}>
-      <label htmlFor="name">Mesocycle Name:</label>
-      <br/>
+      <label htmlFor="name">Name your mesocycle:</label>
+      <br />
       <input
         type="text"
         id="name"
         name="name"
         required
         onChange={(e) => setName(e.target.value)}
-        value={name}/>
-      <br/>
-      <label htmlFor="start_date">Start Date: </label>
-      <br/>
+        value={name} />
+      <br />
+      <label htmlFor="start_date">Start date: </label>
+      <br />
       <input
         type="date"
         id="start_date"
         name="start_date"
         required
         onChange={(e) => setStart_date(e.target.value)}
-        value={start_date}/>
-      <br/>
-      <label htmlFor="end_date">End Date: </label>
-      <br/>
+        value={start_date} />
+      <br />
+      <label htmlFor="end_date">End date: </label>
+      <br />
       <input
         type="date"
         id="end_date"
         name="end_date"
         required
         onChange={(e) => setEnd_date(e.target.value)}
-        value={end_date}/>
-      <br/>
-      <label htmlFor="description">Description: </label>
-      <br/>
+        value={end_date} />
+      <br />
+      <label htmlFor="description">Add a description: </label>
+      <br />
       <textarea
         type="Description"
         id="description"
         name="description"
         required
         onChange={(e) => setDescription(e.target.value)}
-        value={description}/>
-      <br/>
-      <input type="submit" value= "Build"/>
+        value={description} />
+      <br />
+      <input type="submit" value="Build" />
     </form>
+    </div>
+
+
+    <div className ='mesocycle-select'>
+    <h2>Modify a mesocycle</h2>
+      <Mesocycle mesocycles={mesocycles} />
+    </div>
   </div>
   )
 }

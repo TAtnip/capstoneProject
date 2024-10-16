@@ -12,7 +12,6 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
-import os
 
 import environ
 env = environ.Env()
@@ -34,7 +33,7 @@ DEBUG = True
 # Allows any host to host this application
 ALLOWED_HOSTS = ["*"]
 
-# Specify default auth and permission classes
+# Specify default auth and permission classes, this project will be using JWT Authentication
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
@@ -62,7 +61,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "api",
+    "api", # My personal django app
     "corsheaders"
 ]
 
@@ -101,6 +100,8 @@ WSGI_APPLICATION = "ProjectPerformance.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+
+# Found in env file to not be sent to GitHub
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",

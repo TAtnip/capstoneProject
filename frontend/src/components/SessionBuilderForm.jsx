@@ -7,7 +7,8 @@ import { addDays, startOfWeek, format, addWeeks, subWeeks, eachDayOfInterval, is
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronLeft, faChevronRight, faTimes } from '@fortawesome/free-solid-svg-icons';
 
-function SessionBuilderForm({ mesocycle }) {
+function SessionBuilderForm({ mesocycle}) {
+
   const [currentWeek, setCurrentWeek] = useState(() => {
     const startDate = new Date(mesocycle.start_date);
     return startOfWeek(startDate, { weekStartsOn: 0 });
@@ -17,24 +18,19 @@ function SessionBuilderForm({ mesocycle }) {
     start: parseISO(mesocycle.start_date),
     end: parseISO(mesocycle.end_date)
   }).map(date => format(date, 'yyyy-MM-dd'));
+
   const navigate = useNavigate();
   const [exercises, setExercises] = useState([]);
   const [muscleGroupList, setMuscleGroupList] = useState([]);
   const [exercisesByDay, setExercisesByDay] = useState({});
 
-  useEffect(() => {
-    if (allDates && allDates.length > 0 && Object.keys(exercisesByDay).length === 0) {
-      setExercisesByDay(
-        allDates.reduce((acc, day) => ({
-          ...acc,
-          [day]: [{ exerciseId: "", muscleGroups: [], setsArray: [{ weight: null, reps: null, rir: null }] }],
-        }), {})
-      );
-    }
-  }, [allDates, exercisesByDay]);
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  useEffect(() => {
+    setExercisesByDay({});
+    setCurrentWeek(startOfWeek(new Date(mesocycle.start_date), { weekStartsOn: 0 }));
+  }, [mesocycle]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -55,37 +51,43 @@ function SessionBuilderForm({ mesocycle }) {
   }, []);
 
   useEffect(() => {
+    if (allDates && allDates.length > 0 && Object.keys(exercisesByDay).length === 0) {
+      setExercisesByDay(
+        allDates.reduce((acc, day) => ({
+          ...acc,
+          [day]: [{ exerciseId: "", muscleGroups: [], setsArray: [{ weight: null, reps: null, rir: null }] }],
+        }), {})
+      );
+    }
+  }, [allDates]);
+
+  useEffect(() => {
     const fetchSessionsAndSets = async () => {
+      if (!mesocycle) return; // Return early if mesocycle is not available
+
       try {
-        // Fetch sessions for the current mesocycle
         const sessionRes = await api.get(`/api/session/?mesocycle=${mesocycle.id}/`);
         const sessions = sessionRes.data;
 
-        // Loop through each session to fetch the associated sets
         for (const session of sessions) {
           const setsRes = await api.get(`/api/set/by-session/${session.id}/`);
           const sets = setsRes.data;
 
-          // Create an object to group sets by exerciseId
           const exerciseMap = {};
 
           for (const set of sets) {
-            // If the exercise doesn't exist in exerciseMap, fetch the exercise details
             if (!exerciseMap[set.exercise]) {
               const exerciseRes = await api.get(`/api/exercise/${set.exercise}/`);
               const exercise = exerciseRes.data;
-
-              // Fetch the muscle groups from the exercise data
               const muscleGroupIds = exercise.muscle_groups.map(mg => mg.id);
 
               exerciseMap[set.exercise] = {
                 exerciseId: set.exercise,
-                muscleGroups: muscleGroupIds,  // Add muscleGroups to state
-                setsArray: []  // Array to hold all sets for this exercise
+                muscleGroups: muscleGroupIds,
+                setsArray: []
               };
             }
 
-            // Push the current set data into the setsArray for the respective exercise
             exerciseMap[set.exercise].setsArray.push({
               weight: set.weight,
               reps: set.reps,
@@ -94,7 +96,6 @@ function SessionBuilderForm({ mesocycle }) {
             });
           }
 
-          //update exercisesByDay by adding the exercises and muscle groups for this session's date
           setExercisesByDay(prevExercisesByDay => ({
             ...prevExercisesByDay,
             [session.date]: Object.values(exerciseMap)
@@ -158,10 +159,10 @@ function SessionBuilderForm({ mesocycle }) {
   const handleRemoveSet = (day, exerciseIndex, setIndex) => {
     setExercisesByDay((prevExercises) => {
       const updatedExercises = [...prevExercises[day]];
-  
+
 
       updatedExercises[exerciseIndex].setsArray = updatedExercises[exerciseIndex].setsArray.filter((_, idx) => idx !== setIndex);
-  
+
       return { ...prevExercises, [day]: updatedExercises };
     });
   };
@@ -179,13 +180,25 @@ function SessionBuilderForm({ mesocycle }) {
     }));
   };
 
+
   const handleAddSet = (day, exerciseIndex) => {
-    setExercisesByDay((prevExercises) => {
-      const updatedExercises = [...prevExercises[day]];
-      updatedExercises[exerciseIndex].setsArray.push({ weight: null, reps: null, rir: null });
-      return { ...prevExercises, [day]: updatedExercises };
+    console.log("Updating state for day:", day, "exercise:", exerciseIndex);
+    setExercisesByDay(prevState => {
+      const newExercises = [...prevState[day]];
+      const updatedExercise = {
+        ...newExercises[exerciseIndex],
+        setsArray: [...newExercises[exerciseIndex].setsArray, { weight: "", reps: "", rir: "" }]
+      };
+
+      newExercises[exerciseIndex] = updatedExercise;
+
+      return {
+        ...prevState,
+        [day]: newExercises
+      };
     });
   };
+
 
   const handleSetChange = (day, exerciseIndex, setIndex, field, value) => {
     setExercisesByDay((prevExercises) => {
@@ -248,11 +261,12 @@ function SessionBuilderForm({ mesocycle }) {
           }));
 
           for (const setData of setsData) {
+            console.log("setData:", setData);
             await api.post("/api/set/", setData);
           }
         }
       }
-      navigate(`/visuals/${mesocycle.id}`);
+      navigate(`/visuals/`);
     } catch (err) {
       console.error("Error saving session or sets:", err);
     }
@@ -267,7 +281,7 @@ function SessionBuilderForm({ mesocycle }) {
       <div className="sessionbuilder-form">
         <div className="mesocycle-about">
           <h2 className="mesocycle-name">{mesocycle?.name || "Mesocycle Name"}</h2>
-          <span className="mesocycle-date-range">{format(mesocycle?.start_date, 'MMMM dd, yyyy') || "N/A"} - {format(mesocycle?.end_date, 'MMMM dd, yyyy') || "N/A"}</span>
+          <span className="mesocycle-date-range">{format(parseISO(mesocycle.start_date), 'MMMM dd, yyyy') || "N/A"} - {format(parseISO(mesocycle.end_date), 'MMMM dd, yyyy') || "N/A"}</span>
         </div>
         <hr></hr>
 
@@ -283,112 +297,118 @@ function SessionBuilderForm({ mesocycle }) {
             <FontAwesomeIcon icon={faChevronRight} />
           </button>
         </div>
+        <div className='sessionbuilder-form'>
+          <form onSubmit={handleSubmit}>
+            {allDates
+              .filter(day => isWithinInterval(new Date(day), { start: currentWeek, end: addDays(currentWeek, 7) }))
+              .map((day) => (
+                <div key={day} className="day-section">
+                  <h3>{format(parseISO(day), 'EEEE')} - {format(parseISO(day), 'MMMM dd, yyyy')}</h3>
+                  {exercisesByDay[day].map((exercise, i) => (
+                    <div key={i} className="exercise-input">
+                      <div className="ex-mg-container">
+                        <Select
+                          options={exerciseOptions}
+                          value={exercise.exerciseId ? { value: exercise.exerciseId, label: exercises.find(e => e.id === exercise.exerciseId)?.name } : null}
+                          onChange={(selectedOption) => handleExerciseChange(day, i, selectedOption)}
+                          placeholder="Select Exercise"
+                          isClearable
+                          styles={{
+                            container: (provided) => ({
+                              ...provided,
+                              margin: 10
+                            })
+                          }}
+                        />
+                        <Select
+                          options={muscleGroupOptions}
+                          isMulti
+                          value={muscleGroupOptions.filter(mg => exercise.muscleGroups.includes(mg.value))}
+                          onChange={(selectedGroups) => handleMuscleGroupChange(day, i, selectedGroups)}
+                          placeholder="Select Muscle Groups"
+                          styles={{
+                            container: (provided) => ({
+                              ...provided,
+                              margin: 10
+                            })
+                          }}
+                        />
+                      </div>
+                      {exercise.setsArray.map((set, j) => (
+                        <div key={j} className="set-input-container">
+                          <div className="set-number">Set {j + 1}</div>
+                          <div className="sets">
+                            <input
+                              type="number"
+                              value={set.weight || ""}
+                              onChange={(e) => handleSetChange(day, i, j, 'weight', e.target.value)}
+                              placeholder="Weight"
+                              step="0.1"
+                            />
+                            <input
+                              type="number"
+                              value={set.reps || ""}
+                              onChange={(e) => handleSetChange(day, i, j, 'reps', e.target.value)}
+                              placeholder="Reps"
+                            />
+                            <input
+                              type="number"
+                              value={set.rir || ""}
+                              onChange={(e) => handleSetChange(day, i, j, 'rir', e.target.value)}
+                              placeholder="RIR"
+                            />
+                            <div className="remove-set">
+                              <button type="button" onClick={() => handleRemoveSet(day, i, j)}><FontAwesomeIcon icon={faTimes} /></button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      <div className="buttons-container">
 
-        <form onSubmit={handleSubmit}>
-          {allDates
-            .filter(day => isWithinInterval(new Date(day), { start: currentWeek, end: addDays(currentWeek, 7) }))
-            .map((day) => (
-              <div key={day} className="day-section">
-                <h3>{format(parseISO(day), 'EEEE')} - {format(parseISO(day), 'MMMM dd, yyyy')}</h3>
-                {exercisesByDay[day].map((exercise, i) => (
-                  <div key={i} className="exercise-input">
-                    <div className="ex-mg-container">
-                    <Select
-                      options={exerciseOptions}
-                      value={exercise.exerciseId ? { value: exercise.exerciseId, label: exercises.find(e => e.id === exercise.exerciseId)?.name } : null}
-                      onChange={(selectedOption) => handleExerciseChange(day, i, selectedOption)}
-                      placeholder="Select Exercise"
-                      isClearable
-                      styles={{container: (provided) => ({
-                        ...provided,
-                        margin: 10
-                      })}}
-                    />
-                    <Select
-                      options={muscleGroupOptions}
-                      isMulti
-                      value={muscleGroupOptions.filter(mg => exercise.muscleGroups.includes(mg.value))}
-                      onChange={(selectedGroups) => handleMuscleGroupChange(day, i, selectedGroups)}
-                      placeholder="Select Muscle Groups"
-                      styles={{container: (provided) => ({
-                        ...provided,
-                        margin: 10
-                      })}}
-                    />
-                    </div>
-                    {exercise.setsArray.map((set, j) => (
-                    <div key={j} className="set-input-container">
-                      <div className="set-number">Set {j + 1}</div>
-                      <div className="sets">
-                        <input
-                          type="number"
-                          value={set.weight || ""}
-                          onChange={(e) => handleSetChange(day, i, j, 'weight', e.target.value)}
-                          placeholder="Weight"
-                          step="0.1"
-                        />
-                        <input
-                          type="number"
-                          value={set.reps || ""}
-                          onChange={(e) => handleSetChange(day, i, j, 'reps', e.target.value)}
-                          placeholder="Reps"
-                        />
-                        <input
-                          type="number"
-                          value={set.rir || ""}
-                          onChange={(e) => handleSetChange(day, i, j, 'rir', e.target.value)}
-                          placeholder="RIR"
-                        />
-
-                        <button type="button" onClick={() => handleRemoveSet(day, i, j)}><FontAwesomeIcon icon={faTimes} /></button>
+                        <div className="add-set">
+                          <button type="button" onClick={() => handleAddSet(day, i)}>Add Set</button>
+                        </div>
+                        <div className="remove-ex">
+                          <button type="button" onClick={() => handleRemoveExercise(day, i)}>Remove Exercise</button>
+                        </div>
                       </div>
                     </div>
                   ))}
-                  <div className="buttons-container">
-
-                    <div className="add-set">
-                    <button type="button" onClick={() => handleAddSet(day, i)}>Add Set</button>
-                    </div>
-                    <div className="remove-ex">
-                    <button type="button" onClick={() => handleRemoveExercise(day, i)}>Remove Exercise</button>
-                    </div>
-                  </div>
-                  </div>
-                ))}
-                <button type="button" onClick={() => handleAddExercise(day)}>Add Exercise</button>
-              </div>
-            ))}
-          <button type="submit">Save Sessions</button>
-        </form>
+                  <button type="button" onClick={() => handleAddExercise(day)}>Add Exercise</button>
+                </div>
+              ))}
+            <button type="submit">Save Sessions</button>
+          </form>
+        </div>
       </div>
 
       {/* Right side: muscle group totals, make into it's own component */}
       <div>
-      <div className="muscle-group-totals">
-        <h3>Set Totals</h3>
+        <div className="muscle-group-totals">
+          <h3>Week Set Totals</h3>
 
-        {muscleGroupList.map((muscleGroup) => {
-          const totalSets = allDates
-            .filter((day) =>
-              isWithinInterval(new Date(day), { start: currentWeek, end: addDays(currentWeek, 7) }) // Check if date is within the current week
-            )
-            .reduce((total, day) => {
-              return total + exercisesByDay[day].reduce((dayTotal, exercise) => {
-                // Calculate total sets for the muscle group
-                const setsCount = exercise.setsArray ? exercise.setsArray.length : 0; // Get the number of sets for the exercise
-                return dayTotal + (exercise.muscleGroups.includes(muscleGroup.id) ? setsCount : 0);
+          {muscleGroupList.map((muscleGroup) => {
+            const totalSets = allDates
+              .filter((day) =>
+                isWithinInterval(new Date(day), { start: currentWeek, end: addDays(currentWeek, 7) }) // Check if date is within the current week
+              )
+              .reduce((total, day) => {
+                return total + exercisesByDay[day].reduce((dayTotal, exercise) => {
+                  // Calculate total sets for the muscle group
+                  const setsCount = exercise.setsArray ? exercise.setsArray.length : 0; // Get the number of sets for the exercise
+                  return dayTotal + (exercise.muscleGroups.includes(muscleGroup.id) ? setsCount : 0);
+                }, 0);
               }, 0);
-            }, 0);
 
-          return totalSets > 0 ? (
-            <div className="muscle-groups-container" key={muscleGroup.id}>
-              <strong>{muscleGroup.name}:</strong>
-              <span className="sets-count"><u>{Number(totalSets)} sets</u></span>
-            </div>
+            return totalSets > 0 ? (
+              <div className="muscle-groups-container" key={muscleGroup.id}>
+                <strong>{muscleGroup.name}:</strong>
+                <span className="sets-count"><u>{Number(totalSets)} sets</u></span>
+              </div>
 
-          ) : null;
-        })}
-      </div>
+            ) : null;
+          })}
+        </div>
       </div>
     </div>
   );

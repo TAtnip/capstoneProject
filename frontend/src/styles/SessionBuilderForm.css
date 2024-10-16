@@ -2,7 +2,7 @@
   display: flex;
   width: 90%;
   margin: 1.5rem auto;
-  background-color: white;
+  background-color: #f7f9fc;
   border-radius: 0.5rem;
   padding: 1.5rem;
 }
@@ -37,11 +37,12 @@
   flex:1;
   padding: .6rem;
   margin:1rem;
-  background-color: #f7f7f7;
+  background-color: white;
   border-radius: 0.3rem;
-  border: 3px solid rgb(239, 119, 0);
+  border: 3px solid #004d9f;
   font-size: 17px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); 
+
 }
 .muscle-group-totals h3 {
   text-align: center;
@@ -65,14 +66,15 @@ strong {
   margin-left: 10px;
 }
 /* General Form Styles */
-form {
+.sessionbuilder-form form {
   max-width: 800px;          
   margin: 20px auto;          
   padding: 20px;             
-  background-color: #f9f9f9;  
+  background-color: white;
   border-radius: 8px;         
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
-  border: 3px solid rgb(239, 119, 0);
+  border: 3px solid #004d9f;
+  
 }
 
 .ex-mg-container {
@@ -82,12 +84,16 @@ form {
 
 .set-input-container {
   display: flex;
-  align-items: center; 
+  justify-content: center;
   margin-bottom: 10px; 
 }
 
 .set-number {
-  margin-right: 15px; 
+  display: flex;
+  flex-direction: column; /* Align label and input vertically */
+  text-align: center;
+  margin-right: 15px;
+  width: 3rem; 
 }
 
 .sets {
@@ -97,12 +103,13 @@ form {
 }
 
 .sets input {
-  flex: 1; 
-  padding: 8px;
-  margin: 0px;
-  border: 3px solid rgb(57, 57, 59);
+  width: 12rem;
+  padding: 6px;
+  margin: 0 0 0 0.2rem;
+  border: none;
   box-sizing: border-box;
   text-align: center;
+  background-color: #ededed;
 }
 
 .buttons-container {
@@ -113,7 +120,7 @@ form {
 }
 .add-set button {
   border:none;
-  border-radius: 2px;
+  border-radius: 0.3rem;
   background-color: rgb(57, 57, 59);
   color:white;
   padding: 8px;
@@ -128,7 +135,7 @@ form {
 
 .remove-ex button {
   border:none;
-  border-radius: 2px;
+  border-radius: 0.3rem;
   background-color: rgb(57, 57, 59);
   color:white;
   padding:8px;
@@ -138,4 +145,17 @@ form {
 .remove-ex button:hover {
   background-color: #8a0000; 
   transform: scale(1.05); 
+}
+
+.remove-set {
+  display:flex;
+  margin-left: 0.3rem;
+  justify-content: center;
+}
+.remove-set button {
+  background-color: rgb(246, 246, 246);
+  color:rgb(188, 0, 0);
+  border: 0.1rem solid black;
+  border-radius: 0.2rem;
+
 }
