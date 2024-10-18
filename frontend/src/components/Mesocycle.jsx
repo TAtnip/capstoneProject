@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Select from 'react-select';
 import { format } from 'date-fns';
 
+// This component creates the custom mesocycle drop down with a modify button.
 function Mesocycle({ mesocycles }) {
   const [selectedMeso, setSelectedMeso] = useState(null);
   const navigate = useNavigate();

@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import api from '../api';
 import Select, { components } from 'react-select';
 
+// This component renders once a mesocycle is selected. It passes the selected lifts to the visuals page.
+
 function LiftDropDown({ selectedMesocycle, setSelectedExercises }) {
   const [exerciseList, setExerciseList] = useState([]);
   const [loading, setLoading] = useState(false);

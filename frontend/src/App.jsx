@@ -25,6 +25,7 @@ function App() {
   return (
 
     <BrowserRouter>
+    {/* Navbar added to all pages */}
       <Navbar/>
 
       <Routes>

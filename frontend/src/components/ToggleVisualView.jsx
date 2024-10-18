@@ -1,6 +1,8 @@
 import React from 'react';
 import '../styles/ToggleSwitch.css'; 
 
+// This is the toggle switch on the visuals page to toggle between powerlifting and bodybuilding.
+
 function ToggleSwitch({ isPLView, toggleView }) {
   return (
     <div className="toggle-container">

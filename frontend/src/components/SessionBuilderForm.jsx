@@ -7,31 +7,42 @@ import { addDays, startOfWeek, format, addWeeks, subWeeks, eachDayOfInterval, is
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronLeft, faChevronRight, faTimes } from '@fortawesome/free-solid-svg-icons';
 
-function SessionBuilderForm({ mesocycle}) {
+// This component envelopes the tracking portion of the project. It uses an array, exercisesByDay to hold the information required for each date during the mesocycle
 
+function SessionBuilderForm({ mesocycle }) {
+
+  const navigate = useNavigate();
+
+  // holds the current week
   const [currentWeek, setCurrentWeek] = useState(() => {
     const startDate = new Date(mesocycle.start_date);
     return startOfWeek(startDate, { weekStartsOn: 0 });
   });
 
+  //holds all dates between the mesocycles start and end date
   const allDates = eachDayOfInterval({
     start: parseISO(mesocycle.start_date),
     end: parseISO(mesocycle.end_date)
   }).map(date => format(date, 'yyyy-MM-dd'));
 
-  const navigate = useNavigate();
+
   const [exercises, setExercises] = useState([]);
   const [muscleGroupList, setMuscleGroupList] = useState([]);
   const [exercisesByDay, setExercisesByDay] = useState({});
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
+
+  //useEffects
+
+  // Remnant useEffect, that will be used to allow for the selection of mesocycles on this page.
   useEffect(() => {
     setExercisesByDay({});
     setCurrentWeek(startOfWeek(new Date(mesocycle.start_date), { weekStartsOn: 0 }));
   }, [mesocycle]);
 
+  // useEffect gathers all exercises and muscle groups for the dropdowns
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -50,6 +61,7 @@ function SessionBuilderForm({ mesocycle}) {
     fetchData();
   }, []);
 
+  // useEffect creates the exercisesByDay array based on the dates of the mesocycle
   useEffect(() => {
     if (allDates && allDates.length > 0 && Object.keys(exercisesByDay).length === 0) {
       setExercisesByDay(
@@ -61,6 +73,7 @@ function SessionBuilderForm({ mesocycle}) {
     }
   }, [allDates]);
 
+  // useEffect pulls all the sessions and sets data to populate into exercisesByDay
   useEffect(() => {
     const fetchSessionsAndSets = async () => {
       if (!mesocycle) return; // Return early if mesocycle is not available
@@ -110,8 +123,6 @@ function SessionBuilderForm({ mesocycle}) {
   }, [mesocycle.id]);
 
 
-
-
   const exerciseOptions = exercises.map((exercise) => ({
     value: exercise.id,
     label: exercise.name,
@@ -121,6 +132,8 @@ function SessionBuilderForm({ mesocycle}) {
     value: mg.id,
     label: mg.name,
   }));
+
+  // HANDLERS
 
   const handleAddExercise = (day) => {
     setExercisesByDay((prevExercises) => ({
@@ -156,6 +169,24 @@ function SessionBuilderForm({ mesocycle}) {
     }));
   };
 
+  const handleAddSet = (day, exerciseIndex) => {
+    console.log("Updating state for day:", day, "exercise:", exerciseIndex);
+    setExercisesByDay(prevState => {
+      const newExercises = [...prevState[day]];
+      const updatedExercise = {
+        ...newExercises[exerciseIndex],
+        setsArray: [...newExercises[exerciseIndex].setsArray, { weight: "", reps: "", rir: "" }]
+      };
+
+      newExercises[exerciseIndex] = updatedExercise;
+
+      return {
+        ...prevState,
+        [day]: newExercises
+      };
+    });
+  };
+
   const handleRemoveSet = (day, exerciseIndex, setIndex) => {
     setExercisesByDay((prevExercises) => {
       const updatedExercises = [...prevExercises[day]];
@@ -181,25 +212,6 @@ function SessionBuilderForm({ mesocycle}) {
   };
 
 
-  const handleAddSet = (day, exerciseIndex) => {
-    console.log("Updating state for day:", day, "exercise:", exerciseIndex);
-    setExercisesByDay(prevState => {
-      const newExercises = [...prevState[day]];
-      const updatedExercise = {
-        ...newExercises[exerciseIndex],
-        setsArray: [...newExercises[exerciseIndex].setsArray, { weight: "", reps: "", rir: "" }]
-      };
-
-      newExercises[exerciseIndex] = updatedExercise;
-
-      return {
-        ...prevState,
-        [day]: newExercises
-      };
-    });
-  };
-
-
   const handleSetChange = (day, exerciseIndex, setIndex, field, value) => {
     setExercisesByDay((prevExercises) => {
       const updatedExercises = [...prevExercises[day]];
@@ -211,6 +223,7 @@ function SessionBuilderForm({ mesocycle}) {
     });
   };
 
+  //Submit and save the sesssions to the database.
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -244,7 +257,7 @@ function SessionBuilderForm({ mesocycle}) {
           await api.put(`/api/session/${sessionId}/`, sessionData);
           console.log(`Session for ${sessionData.date} already exists and has been updated.`);
 
-          // Delete existing sets before adding the new ones to avoid duplicates
+          // Delete existing sets by deleting the old session before adding the new ones to avoid duplicates
           await api.delete(`/api/set/delete/?session=${sessionId}`);
         }
 
@@ -266,6 +279,7 @@ function SessionBuilderForm({ mesocycle}) {
           }
         }
       }
+      // Navigates to the visuals page to allow the user to perform analyses
       navigate(`/visuals/`);
     } catch (err) {
       console.error("Error saving session or sets:", err);
@@ -280,13 +294,17 @@ function SessionBuilderForm({ mesocycle}) {
     <div className="sessionbuilder-container">
       <div className="sessionbuilder-form">
         <div className="mesocycle-about">
+
+          {/* Mesocycle information for the user */}
           <h2 className="mesocycle-name">{mesocycle?.name || "Mesocycle Name"}</h2>
           <span className="mesocycle-date-range">{format(parseISO(mesocycle.start_date), 'MMMM dd, yyyy') || "N/A"} - {format(parseISO(mesocycle.end_date), 'MMMM dd, yyyy') || "N/A"}</span>
         </div>
+
         <hr></hr>
 
         <div className="week-navigation">
 
+          {/* navigation between weeks */}
           <button onClick={() => setCurrentWeek((prev) => subWeeks(prev, 1))}>
             <FontAwesomeIcon icon={faChevronLeft} />
           </button>
@@ -297,15 +315,21 @@ function SessionBuilderForm({ mesocycle}) {
             <FontAwesomeIcon icon={faChevronRight} />
           </button>
         </div>
+
+
         <div className='sessionbuilder-form'>
+          {/* Main form for the sessions */}
           <form onSubmit={handleSubmit}>
             {allDates
               .filter(day => isWithinInterval(new Date(day), { start: currentWeek, end: addDays(currentWeek, 7) }))
               .map((day) => (
                 <div key={day} className="day-section">
+
                   <h3>{format(parseISO(day), 'EEEE')} - {format(parseISO(day), 'MMMM dd, yyyy')}</h3>
+
                   {exercisesByDay[day].map((exercise, i) => (
                     <div key={i} className="exercise-input">
+
                       <div className="ex-mg-container">
                         <Select
                           options={exerciseOptions}
@@ -379,8 +403,11 @@ function SessionBuilderForm({ mesocycle}) {
               ))}
             <button type="submit">Save Sessions</button>
           </form>
+
         </div>
       </div>
+
+
 
       {/* Right side: muscle group totals, make into it's own component */}
       <div>

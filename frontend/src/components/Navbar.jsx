@@ -4,6 +4,8 @@ import {useEffect} from 'react';
 import { Dropdown } from 'flowbite-react';
 import '../styles/Navbar.css';
 
+//This navbar is rendered across the application by it's addition in the App.jsx file
+
 const Navbar = () => {
   const navigate = useNavigate();
 

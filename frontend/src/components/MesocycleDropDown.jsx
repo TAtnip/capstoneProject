@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import api from '../api';
 import Select from 'react-select';
 
+// This component creates a custom mesocycle dropdown and passes the selected mesocycle
+
 function MesocycleDropDown({ id, setSelectedMesocycle }) {
   const [mesocycleList, setMesocycleList] = useState([]);
   const [loading, setLoading] = useState(true);

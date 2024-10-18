@@ -160,7 +160,7 @@ const fetchPerformanceMetrics = async () => {
           });
 
           metricsWithImprovement.forEach(metric => {
-            const weekStart = format(startOfWeek(new Date(metric.session_date)), 'yyyy-MM-dd');
+            const weekStart = format(startOfWeek(new Date(metric.session_date)), 'MMM dd');
             if (!weeklyImprovementsByMuscleGroup[muscleGroup.name][weekStart]) {
               weeklyImprovementsByMuscleGroup[muscleGroup.name][weekStart] = { totalImprovement: 0, exerciseCount: 0 };
             }
@@ -175,7 +175,7 @@ const fetchPerformanceMetrics = async () => {
           const data = response.data;
 
           data.forEach(set => {
-            const weekStart = format(startOfWeek(new Date(set.session.date)), 'yyyy-MM-dd');
+            const weekStart = format(startOfWeek(new Date(set.session.date)), 'MMM dd');
 
             if (!weeklySetsByMuscleGroup[muscleGroup.name][weekStart]) {
               weeklySetsByMuscleGroup[muscleGroup.name][weekStart] = 0;
@@ -250,7 +250,7 @@ const fetchPerformanceMetrics = async () => {
         </div>
       </div>
           
-      {chartData.length > 0 && <LineChart chartData={chartData} />}
+      {chartData.length > 0 && <LineChart chartData={chartData} isPLView={isPLView} />}
     </div>
   );
   

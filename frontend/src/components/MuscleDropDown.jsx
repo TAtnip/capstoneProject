@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import api from '../api';
 import Select from 'react-select';
 
+// This component renders once a mesocycle is selected and passes the selected muscle groups from the dropdown.
 function MuscleDropDown({ selectedMesocycle, setSelectedMuscleGroups }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
