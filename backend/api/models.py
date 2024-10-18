@@ -4,7 +4,7 @@ from django.db import models
 from django.contrib.auth.models import User 
 
 
-# Models
+# Models, Utilized ChatGPT to generate these quickly based on prompt
 
 class MuscleGroup(models.Model):
   name = models.CharField(max_length=50)

@@ -318,18 +318,15 @@ function SessionBuilderForm({ mesocycle }) {
 
 
         <div className='sessionbuilder-form'>
-          {/* Main form for the sessions */}
+          {/* Main form for the sessions*/}
           <form onSubmit={handleSubmit}>
             {allDates
               .filter(day => isWithinInterval(new Date(day), { start: currentWeek, end: addDays(currentWeek, 7) }))
               .map((day) => (
                 <div key={day} className="day-section">
-
                   <h3>{format(parseISO(day), 'EEEE')} - {format(parseISO(day), 'MMMM dd, yyyy')}</h3>
-
                   {exercisesByDay[day].map((exercise, i) => (
                     <div key={i} className="exercise-input">
-
                       <div className="ex-mg-container">
                         <Select
                           options={exerciseOptions}
@@ -403,11 +400,8 @@ function SessionBuilderForm({ mesocycle }) {
               ))}
             <button type="submit">Save Sessions</button>
           </form>
-
         </div>
       </div>
-
-
 
       {/* Right side: muscle group totals, make into it's own component */}
       <div>

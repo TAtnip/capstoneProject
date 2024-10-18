@@ -51,7 +51,7 @@ class SetSerializer(serializers.ModelSerializer):
     model = Set
     fields = ["id","session","exercise","weight","reps","sequence","rir","sequence"]
     extra_kwargs = {
-        "weight": {"read_only": True},
+        "weight": {"required": False},
         "reps": {"required": False}, 
         "rir": {"required": False}   
     }
